@@ -1,0 +1,49 @@
+
+name: Build JARVIS Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract project ZIP
+        run: |
+          mkdir -p project
+          unzip -o "JARVIS_ANDROID_PHONE_BUILD(1).zip" -d project
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Find Gradle project
+        run: |
+          find project -name gradlew -type f
+
+      - name: Build APK
+        run: |
+          GRADLEW=$(find project -name gradlew -type f | head -n 1)
+          if [ -z "$GRADLEW" ]; then
+            echo "Gradle wrapper not found!"
+            exit 1
+          fi
+          cd "$(dirname "$GRADLEW")"
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: JARVIS-APK
+          path: project/**/build/outputs/apk/debug/*.apk
+          
