@@ -9,27 +9,26 @@ on:
 
 jobs:
   build:
+    name: Build JARVIS APK
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      
-- name: Set up Android SDK
-  uses: android-actions/setup-android@v4
-  with:
-    accept-android-sdk-licenses: 'true'
-    log-accepted-android-sdk-licenses: 'false'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          accept-android-sdk-licenses: 'true'
+          log-accepted-android-sdk-licenses: 'false'
 
-
-      - name: Install Android SDK
+      - name: Install Android SDK packages
         run: |
           sdkmanager --install \
             "platforms;android-35" \
@@ -40,21 +39,25 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Extract Android project
+      - name: Extract JARVIS project
         run: |
           mkdir -p project
           unzip -o "JARVIS_ANDROID_PHONE_BUILD(1).zip" -d project
 
-      - name: Build APK
+      - name: Verify project files
         run: |
-          cd project/JARVIS_ANDROID_APK_PROJECT
+          test -f project/JARVIS_ANDROID_APK_PROJECT/app/build.gradle
+          test -f project/JARVIS_ANDROID_APK_PROJECT/settings.gradle
+          echo "JARVIS project found!"
+
+      - name: Build JARVIS APK
+        working-directory: project/JARVIS_ANDROID_APK_PROJECT
+        run: |
           gradle --no-daemon assembleDebug
 
-      - name: Upload APK
+      - name: Upload JARVIS APK
         uses: actions/upload-artifact@v4
         with:
-          name: JARVIS-debug-APK
+          name: JARVIS-ANDROID-APK
           path: project/JARVIS_ANDROID_APK_PROJECT/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-
-          
